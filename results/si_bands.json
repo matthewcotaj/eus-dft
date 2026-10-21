@@ -1,0 +1,6 @@
+{
+  "lattice_constant_A": 5.4696,
+  "gap_pbe_eV": 0.612,
+  "gap_exp_eV": 1.12,
+  "cbm_fraction_gamma_to_x": 0.84
+}
