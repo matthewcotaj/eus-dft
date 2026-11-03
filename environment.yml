@@ -8,3 +8,4 @@ dependencies:
   - numpy=2.5
   - matplotlib=3.11
   - elpa=2026.02.002=mpi_openmpi*
+  - pytest=9.2

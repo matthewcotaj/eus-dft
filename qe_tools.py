@@ -35,6 +35,7 @@ NPROCS = int(os.environ.get("DFT_NPROCS", "4"))
 HARTREE_TO_EV = 27.211386245988
 RY_TO_EV = HARTREE_TO_EV / 2
 BOHR_TO_ANGSTROM = 0.529177210903
+HARTREE_PER_BOHR3_TO_KBAR = 294210.2648438959
 
 
 # ---------------------------------------------------------------------------
@@ -129,13 +130,13 @@ def _mpi_prefix():
     return prefix
 
 
-def run_pw(name, input_text, workdir):
+def _run(executable, name, input_text, workdir):
     """
-    Write `name.in` into `workdir`, run pw.x on it, and return the parsed results.
+    Write `name.in` into `workdir` and run a QE program on it.
 
     The output goes to `name.out` in the same folder. If that output already
-    exists and finished cleanly, the calculation is skipped and the old result
-    is reused, so re-running a script is fast. Delete the folder to force a rerun.
+    exists, finished cleanly and came from the same input, the calculation is
+    skipped, so re-running a script is fast. Delete the folder to force a rerun.
     """
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
@@ -144,25 +145,63 @@ def run_pw(name, input_text, workdir):
 
     finished = outfile.exists() and "JOB DONE" in outfile.read_text()
     same_input = infile.exists() and infile.read_text() == input_text
-    if not (finished and same_input):
-        if shutil.which("pw.x") is None:
-            raise RuntimeError("pw.x not found. Did you run 'conda activate eus-dft'?")
-        infile.write_text(input_text)
-        cmd = _mpi_prefix() + ["pw.x", "-in", infile.name]
-        print(f"  running {name} ...", flush=True)
-        env = dict(os.environ, OMP_NUM_THREADS="1")
-        if sys.platform == "darwin":
-            # macOS gives each user a very long temp folder path, which OpenMPI rejects
-            env["TMPDIR"] = "/tmp"
-        with open(outfile, "w") as out:
-            subprocess.run(cmd, cwd=workdir, stdout=out, stderr=subprocess.STDOUT, env=env)
-        if "JOB DONE" not in outfile.read_text():
-            raise RuntimeError(f"pw.x failed. Look at the end of {outfile}")
-    else:
+    if finished and same_input:
         print(f"  reusing {name}", flush=True)
+        return outfile, False
 
-    prefix = _find_prefix(input_text)
-    return read_xml(workdir / "tmp" / f"{prefix}.save" / "data-file-schema.xml")
+    if shutil.which(executable) is None:
+        raise RuntimeError(f"{executable} not found. Did you run 'conda activate eus-dft'?")
+    infile.write_text(input_text)
+    cmd = _mpi_prefix() + [executable, "-in", infile.name]
+    print(f"  running {name} ...", flush=True)
+    env = dict(os.environ, OMP_NUM_THREADS="1")
+    if sys.platform == "darwin":
+        # macOS gives each user a very long temp folder path, which OpenMPI rejects
+        env["TMPDIR"] = "/tmp"
+    with open(outfile, "w") as out:
+        subprocess.run(cmd, cwd=workdir, stdout=out, stderr=subprocess.STDOUT, env=env)
+    if "JOB DONE" not in outfile.read_text():
+        raise RuntimeError(f"{executable} failed. Look at the end of {outfile}")
+    return outfile, True
+
+
+def run_pw(name, input_text, workdir):
+    """
+    Run pw.x (see _run) and return the parsed results from its XML output.
+
+    QE writes its results to tmp/<prefix>.save/, and a later nscf or bands run
+    with the same prefix overwrites them. So each run's XML is copied to
+    <name>.xml right after it finishes, and results are always read from that copy.
+    """
+    workdir = Path(workdir)
+    _, ran = _run("pw.x", name, input_text, workdir)
+    saved = workdir / f"{name}.xml"
+    if ran or not saved.exists():
+        prefix = _find_prefix(input_text)
+        shutil.copy(workdir / "tmp" / f"{prefix}.save" / "data-file-schema.xml", saved)
+    return read_xml(saved)
+
+
+def run_projwfc(prefix, workdir, emin=-20.0, emax=15.0, de=0.02):
+    """
+    Project the wavefunctions of a finished calculation onto atomic orbitals
+    (Eu 4f, Eu 5d, S 3p, ...) with projwfc.x. This gives the projected density
+    of states, which shows which orbitals make up each band.
+
+    emin and emax are absolute energies in eV, not relative to the Fermi
+    level, so pass a window around the Fermi energy of the run.
+
+    Read the results with read_pdos(workdir, prefix).
+    """
+    text = (
+        "&projwfc\n"
+        f"  prefix = '{prefix}'\n"
+        "  outdir = './tmp'\n"
+        f"  filpdos = '{prefix}'\n"
+        f"  Emin = {emin}, Emax = {emax}, DeltaE = {de}\n"
+        "/\n"
+    )
+    _run("projwfc.x", f"{prefix}_projwfc", text, workdir)
 
 
 def _find_prefix(input_text):
@@ -187,6 +226,7 @@ def read_xml(path):
       occupations   array (spin, k-point, band), 0 to 1
       kpoints       k-points in cartesian units of 2*pi/alat
       magnetization total magnetic moment per cell (Bohr magnetons), 0 if non-magnetic
+      pressure      pressure in kbar (only if the run had tstress = .true.)
     """
     root = ET.parse(path).getroot()
     out = root.find("output")
@@ -223,6 +263,13 @@ def read_xml(path):
     if mag is not None and mag.find("total") is not None:
         total_mag = float(mag.find("total").text)
 
+    # stress tensor is in Hartree/bohr^3; pressure is minus a third of its trace
+    pressure = None
+    stress = out.find("stress")
+    if stress is not None:
+        sigma = np.array(stress.text.split(), float).reshape(3, 3)
+        pressure = -np.trace(sigma) / 3 * HARTREE_PER_BOHR3_TO_KBAR
+
     return {
         "energy": float(out.find("total_energy/etot").text) * HARTREE_TO_EV,
         "fermi": fermi,
@@ -230,6 +277,7 @@ def read_xml(path):
         "occupations": occs,
         "kpoints": np.array(kpts),
         "magnetization": total_mag,
+        "pressure": pressure,
     }
 
 
@@ -253,6 +301,49 @@ def band_edges_by_count(eigenvalues, n_occupied):
     vbm = e[:, n_occupied - 1].max()
     cbm = e[:, n_occupied].min()
     return vbm, cbm, cbm - vbm
+
+
+def read_pdos(workdir, prefix, species):
+    """
+    Read the projected DOS files written by projwfc.x.
+
+    species is the same dict passed to make_pw_input; it is used to look up
+    the orbital names (5d, 4f, 3p, ...) stored in each pseudopotential file.
+
+    Returns (energies, total, projections), where
+      energies     1D array in eV
+      total        array (spin, energy) of the total DOS
+      projections  dict like {"Eu 4f": array (spin, energy), "S 3p": ...},
+                   summed over all atoms of the same species
+    Spin index 0 is up, 1 is down. Spin-down values are made negative so they
+    plot below the axis, which is the usual convention.
+    """
+    workdir = Path(workdir)
+    tot = np.loadtxt(workdir / f"{prefix}.pdos_tot")
+    energies = tot[:, 0]
+    sign = np.array([1, -1])[:, None]
+    total = tot[:, 1:3].T * sign
+
+    orbital_names = {label: _orbital_names(PSEUDO_DIR / pseudo)
+                     for label, (_, pseudo) in species.items()}
+
+    projections = {}
+    # file names look like  eus.pdos_atm#1(Eu)_wfc#6(f)
+    for path in sorted(workdir.glob(f"{prefix}.pdos_atm#*")):
+        atom = path.name.split("(")[1].split(")")[0]
+        n_wfc = int(path.name.split("_wfc#")[1].split("(")[0])
+        element = atom.rstrip("0123456789")
+        label = f"{element} {orbital_names[atom][n_wfc - 1].lower()}"
+        data = np.loadtxt(path)[:, 1:3].T * sign     # local DOS, spin up and down
+        projections[label] = projections.get(label, 0) + data
+    return energies, total, projections
+
+
+def _orbital_names(upf_path):
+    """Orbital labels (like '5D', '4F') of the atomic wavefunctions in a UPF file."""
+    root = ET.parse(upf_path).getroot()
+    chis = root.find("PP_PSWFC")
+    return [chi.get("label") for chi in chis if chi.tag.startswith("PP_CHI")]
 
 
 # ---------------------------------------------------------------------------
