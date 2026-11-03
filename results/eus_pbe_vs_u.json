@@ -1,0 +1,23 @@
+{
+  "PBE": {
+    "U_eV": 0.0,
+    "lattice_constant_A": 5.8396,
+    "lattice_error_percent": -2.15,
+    "bulk_modulus_GPa": 60.4,
+    "gap_eV": 0.023,
+    "moment_bohr_magneton": 6.97
+  },
+  "PBE+U": {
+    "U_eV": 7.0,
+    "lattice_constant_A": 5.9996,
+    "lattice_error_percent": 0.53,
+    "bulk_modulus_GPa": 50.1,
+    "gap_eV": 1.008,
+    "moment_bohr_magneton": 7.0
+  },
+  "experiment": {
+    "lattice_constant_A": 5.968,
+    "gap_eV": 1.65,
+    "moment_bohr_magneton": 7.0
+  }
+}
