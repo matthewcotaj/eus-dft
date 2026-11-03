@@ -1,0 +1,60 @@
+{
+  "ecutwfc_Ry": 140,
+  "kmesh": 6,
+  "U_eV": 7.0,
+  "tolerances": {
+    "pressure_kbar": 2.0,
+    "gap_eV": 0.01,
+    "energy_meV_per_atom": 1.0
+  },
+  "cutoff_test": {
+    "ecutwfc_Ry": [
+      60,
+      80,
+      100,
+      120,
+      140,
+      160
+    ],
+    "pressure_kbar": [
+      1216.33,
+      33.74,
+      14.11,
+      -0.5,
+      -6.55,
+      -6.62
+    ],
+    "gap_eV": [
+      1.021,
+      0.9249,
+      0.9134,
+      0.9243,
+      0.9257,
+      0.9256
+    ]
+  },
+  "density_cutoff_check": {
+    "pressure_change_kbar": 0.023,
+    "gap_change_eV": 0.0006
+  },
+  "kpoint_test": {
+    "kmesh": [
+      4,
+      6,
+      8,
+      10
+    ],
+    "energy_error_meV_per_atom": [
+      6.6267,
+      0.4715,
+      0.0509,
+      0.0
+    ],
+    "gap_eV": [
+      0.9224,
+      0.9257,
+      0.926,
+      0.9261
+    ]
+  }
+}
