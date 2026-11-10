@@ -5,9 +5,9 @@ Compute the total energy at a range of lattice constants, then fit an
 equation of state E(V). The minimum gives the predicted lattice constant and
 the curvature gives the bulk modulus.
 
-What to expect: PBE usually overestimates lattice constants by about 1%.
-That is a known, systematic error of the functional, not a bug, and the same
-check will be made for EuS later.
+PBE usually overestimates lattice constants by about 1%. That is a
+systematic error of the functional, not a bug. Step 5 makes the same
+comparison for EuS.
 
 Outputs:
   results/si_lattice.png   E(V) points and the fitted curve

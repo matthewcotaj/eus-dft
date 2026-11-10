@@ -6,11 +6,10 @@ Two calculations:
   2. bands : using that fixed density, compute energies along a path of
              high-symmetry points in the Brillouin zone (L - Gamma - X - U | K - Gamma)
 
-What to expect: silicon has an indirect gap, with the valence band maximum at
-Gamma and the conduction band minimum about 85% of the way from Gamma to X.
-PBE predicts a gap of roughly 0.6 eV, about half the experimental 1.12 eV.
-This "band gap problem" is the most famous weakness of standard DFT, and it
-shows up again (much more dramatically) for EuS.
+Silicon has an indirect gap, with the valence band maximum at Gamma and the
+conduction band minimum about 85% of the way from Gamma to X. PBE should give
+a gap of roughly 0.6 eV, about half the experimental 1.12 eV. This band gap
+problem comes back for EuS in steps 5 and 6.
 
 Outputs:
   results/si_bands.png   band structure with the gap marked

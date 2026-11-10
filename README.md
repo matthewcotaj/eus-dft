@@ -2,7 +2,7 @@
 
 Density functional theory (DFT) calculations of europium sulfide, a Eu²⁺ ferromagnetic semiconductor, using Quantum ESPRESSO.
 
-My undergraduate research was on colloidal EuGdCuS₃ nanorods, where the magnetism comes from the half-filled 4f shell of Eu²⁺. This project asks what standard DFT gets right and wrong about that kind of material. The short answer for f-electron systems is that plain DFT gets it badly wrong, and the project is built around showing that failure and fixing it.
+My undergraduate research was on colloidal EuGdCuS₃ nanorods, where the magnetism comes from the half-filled 4f shell of Eu²⁺. This project looks at what standard DFT gets right and wrong for that kind of material. For f-electron systems plain DFT gets a lot wrong, so the project shows where it fails and how much a Hubbard U correction fixes.
 
 ## Roadmap
 
@@ -16,7 +16,7 @@ My undergraduate research was on colloidal EuGdCuS₃ nanorods, where the magnet
 | 6 | How the EuS results depend on U | Done |
 | 7 | Exchange constants J₁, J₂ from magnetic configurations, fed into my [Monte Carlo code](https://github.com/matthewcotaj/magnetic-ordering) to predict T_c (experiment 16.5 K) | Next |
 
-Silicon comes first because it is cheap and well understood, so it validates the workflow before moving to a material where things can go wrong.
+I started with silicon because it is cheap and well understood, so any problem there is a problem with the setup, not the material.
 
 ## Results: silicon
 
@@ -39,7 +39,7 @@ PBE overestimates the lattice constant by 0.7%, the expected direction and size 
 
 ### Band structure
 
-PBE gives an indirect gap of **0.61 eV** against the experimental 1.12 eV, with the conduction band minimum 84% of the way from Γ to X. Underestimating gaps by about half is the well-known band gap problem of semilocal DFT.
+PBE gives an indirect gap of **0.61 eV** against the experimental 1.12 eV, with the conduction band minimum 84% of the way from Γ to X. PBE typically underestimates gaps by about half, so this is expected.
 
 ![Silicon band structure](results/si_bands.png)
 
@@ -86,7 +86,7 @@ U is an input to PBE+U, not something it computes, so step 6 repeats the calcula
 | Gap (eV) | 0.03 | 0.04 | 0.15 | 0.71 | 0.93 | 1.10 | 1.33 |
 | Occupied 4f center - VBM (eV) | -0.18 | -0.26 | -0.64 | -0.95 | -1.18 | -1.46 | -2.16 |
 
-The gap barely moves until U reaches about 4 eV, then grows steadily, but it stays below experiment over the whole range and reaches only 1.33 eV at U = 10 eV. (At U = 7 eV the gap here is 0.93 eV rather than the 1.01 eV of step 5, because step 5 uses the slightly larger PBE+U lattice constant.) By U = 10 eV the occupied 4f band has sunk below the center of the S 3p band, so raising U further no longer just moves the 4f states away from the gap. No reasonable U reproduces the measured gap. The likely remaining error is the usual semilocal underestimate of the gap to the Eu 5d conduction band, which a U on the 4f shell does not touch. It is the same band gap problem seen in silicon.
+The gap barely moves until U reaches about 4 eV, then grows steadily, but it stays below experiment over the whole range and reaches only 1.33 eV at U = 10 eV. (At U = 7 eV the gap here is 0.93 eV rather than the 1.01 eV of step 5, because step 5 uses the slightly larger PBE+U lattice constant.) By U = 10 eV the occupied 4f band has sunk below the center of the S 3p band, so raising U further no longer just moves the 4f states away from the gap. No reasonable U reproduces the measured gap. What is left is most likely PBE underestimating the gap to the Eu 5d conduction band, which a U on the 4f shell does not touch. That is the same band gap problem as in silicon.
 
 ![EuS U scan](results/eus_u_scan.png)
 
@@ -129,7 +129,7 @@ The gap barely moves until U reaches about 4 eV, then grows steadily, but it sta
    pytest
    ```
 
-Calculations run on 4 cores by default. Change it with `export DFT_NPROCS=2` (or `1` to run without MPI). Raw QE files go to `runs/`. Re-running a script reuses finished calculations, so delete a folder in `runs/` to force a fresh run.
+Calculations run on 4 cores by default (fewer if the machine has fewer). Change it with `export DFT_NPROCS=2` (or `1` to run without MPI). Raw QE files go to `runs/`. Re-running a script reuses finished calculations, so delete a folder in `runs/` to force a fresh run.
 
 ## Repository layout
 
@@ -164,4 +164,4 @@ The Eu potential keeps the 4f shell as valence electrons rather than freezing it
 - A. Dal Corso, *Comput. Mater. Sci.* **95**, 337 (2014). pslibrary.
 - A. H. Larsen et al., *J. Phys.: Condens. Matter* **29**, 273002 (2017). ASE.
 - V. I. Anisimov, J. Zaanen and O. K. Andersen, *Phys. Rev. B* **44**, 943 (1991). DFT+U.
-- I. Timrov, N. Marzari and M. Cococcioni, *Phys. Rev. B* **103**, 045141 (2021). Hubbard input format and ortho-atomic projectors in QE.
+- I. Timrov, F. Aquilante, L. Binci, M. Cococcioni and N. Marzari, *Phys. Rev. B* **102**, 235159 (2020). Ortho-atomic projectors for DFT+U in QE.
