@@ -6,7 +6,7 @@ Every script in this repo does the same three things:
   2. write a pw.x input file and run it
   3. read the results back from QE's XML output
 
-This module keeps steps 2 and 3 in one place so the scripts can focus on the physics.
+Steps 2 and 3 live here so the scripts only deal with the physics.
 """
 
 import json
@@ -28,9 +28,10 @@ PSEUDO_DIR = ROOT / "pseudos"
 RUN_DIR = ROOT / "runs"        # raw QE input/output files (not committed to git)
 RESULTS_DIR = ROOT / "results"  # plots and summary numbers (committed)
 
-# Number of MPI processes. An M2 has 4 performance cores, so 4 is a good default.
+# Number of MPI processes. An M2 has 4 performance cores, so 4 is the default,
+# capped at the number of cores (OpenMPI refuses to start more ranks than that).
 # Override from the terminal with:  export DFT_NPROCS=2
-NPROCS = int(os.environ.get("DFT_NPROCS", "4"))
+NPROCS = int(os.environ.get("DFT_NPROCS", min(4, os.cpu_count() or 1)))
 
 HARTREE_TO_EV = 27.211386245988
 RY_TO_EV = HARTREE_TO_EV / 2
@@ -44,11 +45,14 @@ HARTREE_PER_BOHR3_TO_KBAR = 294210.2648438959
 
 def _format_value(value):
     """Turn a Python value into Fortran namelist syntax."""
-    if isinstance(value, bool):
+    if isinstance(value, (bool, np.bool_)):
         return ".true." if value else ".false."
     if isinstance(value, str):
         return f"'{value}'"
-    return repr(value)
+    if isinstance(value, (int, np.integer)):
+        return str(int(value))
+    # float() so NumPy numbers print as 5.9 and not np.float64(5.9)
+    return repr(float(value))
 
 
 def make_pw_input(atoms, namelists, species, kpoints, labels=None, extra_cards=""):
@@ -130,13 +134,14 @@ def _mpi_prefix():
     return prefix
 
 
-def _run(executable, name, input_text, workdir):
+def _run(executable, name, input_text, workdir, force=False):
     """
     Write `name.in` into `workdir` and run a QE program on it.
 
     The output goes to `name.out` in the same folder. If that output already
     exists, finished cleanly and came from the same input, the calculation is
-    skipped, so re-running a script is fast. Delete the folder to force a rerun.
+    skipped, so re-running a script is fast. Delete the folder (or pass
+    force=True) to force a rerun.
     """
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +150,7 @@ def _run(executable, name, input_text, workdir):
 
     finished = outfile.exists() and "JOB DONE" in outfile.read_text()
     same_input = infile.exists() and infile.read_text() == input_text
-    if finished and same_input:
+    if finished and same_input and not force:
         print(f"  reusing {name}", flush=True)
         return outfile, False
 
@@ -174,9 +179,11 @@ def run_pw(name, input_text, workdir):
     <name>.xml right after it finishes, and results are always read from that copy.
     """
     workdir = Path(workdir)
-    _, ran = _run("pw.x", name, input_text, workdir)
     saved = workdir / f"{name}.xml"
-    if ran or not saved.exists():
+    # Without the saved copy the run has to be redone: the XML in tmp/ may
+    # already belong to a later nscf run with the same prefix.
+    _, ran = _run("pw.x", name, input_text, workdir, force=not saved.exists())
+    if ran:
         prefix = _find_prefix(input_text)
         shutil.copy(workdir / "tmp" / f"{prefix}.save" / "data-file-schema.xml", saved)
     return read_xml(saved)
@@ -316,7 +323,7 @@ def read_pdos(workdir, prefix, species):
       projections  dict like {"Eu 4f": array (spin, energy), "S 3p": ...},
                    summed over all atoms of the same species
     Spin index 0 is up, 1 is down. Spin-down values are made negative so they
-    plot below the axis, which is the usual convention.
+    plot below the axis.
     """
     workdir = Path(workdir)
     tot = np.loadtxt(workdir / f"{prefix}.pdos_tot")

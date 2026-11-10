@@ -75,6 +75,20 @@ def test_input_has_counts_and_mesh():
     assert positions.count("  Si ") == 2
 
 
+def test_numpy_values_written_as_plain_numbers():
+    text = qe.make_pw_input(
+        bulk("Si", "diamond", a=5.43),
+        namelists={"system": {"ecutwfc": np.int64(40), "degauss": np.float64(0.01)},
+                   "control": {"tstress": np.bool_(True)}},
+        species={"Si": (28.085, "Si.upf")},
+        kpoints=(4, 4, 4),
+    )
+    assert "ecutwfc = 40\n" in text
+    assert "degauss = 0.01\n" in text
+    assert "tstress = .true." in text
+    assert "np." not in text
+
+
 def test_input_explicit_kpoints_and_extra_card():
     kpts = np.array([[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0]])
     text = qe.make_pw_input(
