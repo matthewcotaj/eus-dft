@@ -13,7 +13,8 @@ import qe_tools as qe
 
 # Experimental reference values
 A_EXP = 5.968        # lattice constant (Angstrom), room temperature
-GAP_EXP = 1.65       # optical band gap (eV), low temperature
+GAP_EXP = 1.65       # optical gap (eV): the occupied 4f -> empty 5d edge. It
+                     # red-shifts by about 0.1 eV when EuS orders below T_C
 MOMENT_EXP = 7.0     # Bohr magnetons per Eu (4f7, spin only)
 TC_EXP = 16.5        # Curie temperature (K)
 

@@ -73,7 +73,7 @@ The converged pressure at the experimental lattice constant is +6.6 kbar. That s
 
 Plain PBE puts the seven occupied 4f states right at the top of the valence band, with the empty 4f states only about 4.5 eV higher, and the gap essentially closes. The 4f electrons are too spread out and join in bonding they should not, which also pulls the lattice in by 2%. Both are symptoms of self-interaction error.
 
-Adding U = 7 eV on the Eu 4f orbitals pushes the occupied 4f down to about 1.2 eV below the valence band top and the empty 4f up to about 10.5 eV. The gap opens to 1.0 eV, the lattice constant comes within 0.5% of experiment, and the moment is the full 7 μB of a 4f⁷ ion.
+Adding U = 7 eV on the Eu 4f orbitals pushes the occupied 4f down to about 1.2 eV below the valence band top and the empty 4f up to about 10.5 eV. The gap opens to 1.0 eV, the lattice constant comes within 0.5% of experiment, and the moment is the full 7 μB of a 4f⁷ ion. Note that with the 4f pushed down, the top of the valence band is now S 3p, so this 1.0 eV is an S 3p → Eu 5d gap (more on that below).
 
 ![EuS projected density of states](results/eus_pdos.png)
 
@@ -88,7 +88,11 @@ U is an input to PBE+U, not something it computes, so step 6 repeats the calcula
 | Gap (eV) | 0.03 | 0.04 | 0.15 | 0.71 | 0.93 | 1.10 | 1.33 |
 | Occupied 4f center - VBM (eV) | -0.18 | -0.26 | -0.64 | -0.95 | -1.18 | -1.46 | -2.16 |
 
-The gap barely moves until U reaches about 4 eV, then grows steadily, but it stays below experiment over the whole range and reaches only 1.33 eV at U = 10 eV. (At U = 7 eV the gap here is 0.93 eV rather than the 1.01 eV of step 5, because step 5 uses the slightly larger PBE+U lattice constant.) By U = 10 eV the occupied 4f band has sunk below the center of the S 3p band, so raising U further no longer just moves the 4f states away from the gap. No reasonable U reproduces the measured gap. What is left is most likely PBE underestimating the gap to the Eu 5d conduction band, which a U on the 4f shell does not touch. That is the same band gap problem as in silicon.
+The gap barely moves until U reaches about 4 eV, then grows steadily, but it stays below experiment over the whole range and reaches only 1.33 eV at U = 10 eV. (At U = 7 eV the gap here is 0.93 eV rather than the 1.01 eV of step 5, because step 5 uses the slightly larger PBE+U lattice constant.)
+
+Comparing these numbers with 1.65 eV needs care. The measured gap is the 4f → 5d edge: in EuS the occupied 4f level sits above the S 3p band and forms the top of the valence band. In PBE+U that ordering only holds at small U. As U grows the occupied 4f sinks below the valence band top, which then becomes S 3p (the step 5 PDOS shows this at U = 7 eV), so the gap in the table becomes an S 3p → Eu 5d gap, a different transition from the one measured. By U = 10 eV the 4f band center is even below the S 3p center.
+
+So the failure is not just that the gap is too small. No single U gets the gap and the 4f position right together: a small U keeps the 4f at the top of the valence band but leaves almost no gap, and a large U opens a gap only by burying the 4f below the S 3p band. Getting both needs a method that also corrects the Eu 5d conduction band, such as a hybrid functional or GW.
 
 ![EuS U scan](results/eus_u_scan.png)
 
