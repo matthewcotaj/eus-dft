@@ -270,12 +270,14 @@ def read_xml(path):
     if mag is not None and mag.find("total") is not None:
         total_mag = float(mag.find("total").text)
 
-    # stress tensor is in Hartree/bohr^3; pressure is minus a third of its trace
+    # stress tensor is in Hartree/bohr^3. QE's sign convention makes the
+    # pressure plus a third of its trace (the same "P=" pw.x prints): positive
+    # when the cell is compressed and wants to expand.
     pressure = None
     stress = out.find("stress")
     if stress is not None:
         sigma = np.array(stress.text.split(), float).reshape(3, 3)
-        pressure = -np.trace(sigma) / 3 * HARTREE_PER_BOHR3_TO_KBAR
+        pressure = np.trace(sigma) / 3 * HARTREE_PER_BOHR3_TO_KBAR
 
     return {
         "energy": float(out.find("total_energy/etot").text) * HARTREE_TO_EV,

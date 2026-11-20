@@ -53,10 +53,12 @@ The absolute energy converges too slowly to be a useful criterion, so the cutoff
 
 | ecutwfc (Ry) | 60 | 80 | 100 | 120 | 140 | 160 |
 |---|---|---|---|---|---|---|
-| Pressure (kbar) | 1216 | 33.7 | 14.1 | -0.5 | -6.6 | -6.6 |
+| Pressure (kbar) | -1216 | -33.7 | -14.1 | 0.5 | 6.6 | 6.6 |
 | Gap (eV) | 1.021 | 0.925 | 0.913 | 0.924 | 0.926 | 0.926 |
 
 Converged at **ecutwfc = 140 Ry** (ecutrho = 4x; doubling it to 8x changes the pressure by 0.02 kbar) and a **6×6×6 k-mesh** (0.5 meV/atom from the 10×10×10 result).
+
+The converged pressure at the experimental lattice constant is +6.6 kbar. That sign is a useful check: PBE+U's own equilibrium lattice constant (6.000 Å, below) is larger than 5.968 Å, so at the experimental value the cell is slightly compressed, and with a 50 GPa bulk modulus a 0.5% compression corresponds to about +8 kbar. The large negative pressures at low cutoff are Pulay stress from the incomplete basis.
 
 ![EuS convergence](results/eus_convergence.png)
 

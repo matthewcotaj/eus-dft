@@ -144,8 +144,9 @@ def test_read_spin_polarized_splits_up_and_down(tmp_path):
 
 
 def test_pressure_sign_and_units(tmp_path):
-    # QE's stress is minus the pressure: a compressed crystal has negative diagonal stress
-    sigma = -1e-5 * np.eye(3)                       # Hartree / bohr^3
+    # QE reports P = +trace(sigma)/3: a compressed crystal has positive diagonal
+    # entries and positive pressure, the same sign as the "P=" line in pw.x output
+    sigma = 1e-5 * np.eye(3)                        # Hartree / bohr^3
     r = qe.read_xml(write_xml(tmp_path / "p.xml", [[0.0]], [[1.0]], stress=sigma))
     assert r["pressure"] == pytest.approx(1e-5 * qe.HARTREE_PER_BOHR3_TO_KBAR)
     assert r["pressure"] == pytest.approx(2.942, abs=1e-3)   # kbar
