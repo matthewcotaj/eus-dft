@@ -182,3 +182,71 @@ def test_band_top_finds_upper_half_maximum():
     dos = np.convolve(box, kernel / kernel.sum(), mode="same")
     dos += 0.5 * ((e > 2) & (e < 3))          # an empty band above the Fermi level
     assert qe.band_top(e, dos, below=0.0) == pytest.approx(-1.0, abs=0.02)
+
+
+# ---------------------------------------------------------------------------
+# Magnetic cells and exchange constants (step 7)
+# ---------------------------------------------------------------------------
+
+def _pair_sums(cell, afm):
+    """
+    Sum of s_i s_j over nearest and next-nearest Eu neighbors, per Eu and per
+    pair (each pair once), counted directly from the periodic structure.
+    """
+    from ase.neighborlist import neighbor_list
+
+    a = eus.A_EXP
+    atoms, plane = eus.magnetic_structure(cell, a)
+    eu = [i for i, s in enumerate(atoms.get_chemical_symbols()) if s == "Eu"]
+    spin = np.where(plane == 0, 1, -1) if afm else np.ones(len(atoms), int)
+    i, j, d = neighbor_list("ijd", atoms, a * 1.01)
+    sums = []
+    for r in (a / np.sqrt(2), a):
+        keep = np.isin(i, eu) & np.isin(j, eu) & np.isclose(d, r, atol=1e-3)
+        sums.append((spin[i[keep]] * spin[j[keep]]).sum() / 2 / len(eu))
+    return sums
+
+
+@pytest.mark.parametrize("cell, afm, expected", [
+    ("I", False, (6, 3)), ("I", True, (-2, 3)),
+    ("II", False, (6, 3)), ("II", True, (0, -3)),
+])
+def test_magnetic_cells_have_the_right_neighbor_shells(cell, afm, expected):
+    atoms, plane = eus.magnetic_structure(cell)
+    assert atoms.get_chemical_formula() == "Eu2S2"
+    eu_planes = sorted(plane[np.array(atoms.get_chemical_symbols()) == "Eu"])
+    assert eu_planes == [0, 1]                      # one Eu on each plane
+    assert _pair_sums(cell, afm) == pytest.approx(expected)
+
+
+def test_exchange_constants_invert_the_energy_model():
+    # energies (per 2-Eu cell) built from the model with known J1, J2
+    j1, j2, s2 = 0.0381, -0.0172, eus.S_EU ** 2
+    energy = {
+        ("I", False): -s2 * (6 * j1 + 3 * j2),
+        ("I", True): -s2 * (-2 * j1 + 3 * j2),
+        ("II", False): -s2 * (6 * j1 + 3 * j2),
+        ("II", True): s2 * 3 * j2,
+    }
+    e = {key: 2 * value - 1000.0 for key, value in energy.items()}   # offset cancels
+    got = eus.exchange_constants(e["I", False], e["I", True],
+                                 e["II", False], e["II", True])
+    assert got == pytest.approx((j1, j2))
+
+
+def test_magnetic_input_has_two_eu_species_and_matching_kmesh():
+    atoms, _ = eus.magnetic_structure("II")
+    assert eus.kmesh_for(eus.structure(), 6) == (6, 6, 6)
+    assert all(n >= 1 for n in eus.kmesh_for(atoms, 6))
+    captured = {}
+    real_run_pw = qe.run_pw
+    qe.run_pw = lambda name, text, workdir: captured.setdefault("text", text)
+    try:
+        eus.run_magnetic("t", ".", "II", afm=True, u=7.0)
+    finally:
+        qe.run_pw = real_run_pw
+    text = captured["text"]
+    assert "starting_magnetization(2) = -0.8" in text
+    assert "U Eu1-4f 7.0" in text and "U Eu2-4f 7.0" in text
+    positions = text.split("ATOMIC_POSITIONS crystal\n")[1].split("K_POINTS")[0]
+    assert positions.count("  Eu1 ") == 1 and positions.count("  Eu2 ") == 1

@@ -14,7 +14,7 @@ My undergraduate research was on colloidal EuGdCuS₃ nanorods, where the magnet
 | 4 | Convergence tests on EuS | Done |
 | 5 | EuS with plain PBE vs PBE+U: the 4f states land at the Fermi level, then U opens the gap; compare gap, lattice constant and moment to experiment | Done |
 | 6 | How the EuS results depend on U | Done |
-| 7 | Exchange constants J₁, J₂ from magnetic configurations, fed into my [Monte Carlo code](https://github.com/matthewcotaj/magnetic-ordering) to predict T_c (experiment 16.5 K) | Next |
+| 7 | Exchange constants J₁, J₂ from magnetic configurations, fed into my [Monte Carlo code](https://github.com/matthewcotaj/magnetic-ordering) to predict T_c (experiment 16.5 K) | In progress |
 
 I started with silicon because it is cheap and well understood, so any problem there is a problem with the setup, not the material.
 
@@ -125,6 +125,7 @@ So the failure is not just that the gap is too small. No single U gets the gap a
    python 04_eus_convergence.py
    python 05_eus_pbe_vs_u.py
    python 06_eus_u_scan.py
+   python 07_eus_exchange.py
    ```
 
    The silicon steps take a few minutes in total. The EuS steps are much heavier: roughly 25, 50 and 20 minutes for steps 4, 5 and 6.
@@ -149,6 +150,7 @@ plotting.py           shared figure style
 04_eus_convergence.py cutoff and k-point convergence for EuS
 05_eus_pbe_vs_u.py    PBE vs PBE+U: equation of state, gap, moment, projected DOS
 06_eus_u_scan.py      gap and 4f position as a function of U
+07_eus_exchange.py    J1 and J2 from FM, AFM-I and AFM-II total energies
 tests/                unit tests for qe_tools (run with pytest)
 pseudos/              pseudopotentials
 results/              figures and summary numbers (JSON)
