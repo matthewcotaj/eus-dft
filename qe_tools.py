@@ -312,6 +312,21 @@ def band_edges_by_count(eigenvalues, n_occupied):
     return vbm, cbm, cbm - vbm
 
 
+def band_top(energy, dos, below, frac=0.5):
+    """
+    Upper edge of an occupied band in a DOS or PDOS curve: the highest energy
+    at or below `below` (usually the Fermi level) where the curve is still at
+    least `frac` times its maximum in that range.
+
+    PDOS curves are broadened, which smears every edge upward a little. Using
+    the half maximum (frac = 0.5) keeps that shift small for a narrow band like
+    Eu 4f, where a low threshold would mostly measure the broadening tail.
+    """
+    mask = energy <= below
+    e, d = energy[mask], dos[mask]
+    return float(e[d >= frac * d.max()].max())
+
+
 def read_pdos(workdir, prefix, species):
     """
     Read the projected DOS files written by projwfc.x.

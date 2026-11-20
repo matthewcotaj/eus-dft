@@ -172,3 +172,13 @@ def test_read_pdos_labels_and_spin(tmp_path):
     np.testing.assert_allclose(total[0], up)
     np.testing.assert_allclose(total[1], -down)      # spin down plotted below the axis
     np.testing.assert_allclose(proj["Eu 4f"][1], -down)
+
+
+def test_band_top_finds_upper_half_maximum():
+    e = np.linspace(-5, 5, 2001)
+    # a flat band from -2 to -1 eV, broadened by a 0.1 eV Gaussian
+    box = ((e >= -2) & (e <= -1)).astype(float)
+    kernel = np.exp(-0.5 * (np.linspace(-1, 1, 401) / 0.1) ** 2)
+    dos = np.convolve(box, kernel / kernel.sum(), mode="same")
+    dos += 0.5 * ((e > 2) & (e < 3))          # an empty band above the Fermi level
+    assert qe.band_top(e, dos, below=0.0) == pytest.approx(-1.0, abs=0.02)
