@@ -87,10 +87,13 @@ U is an input to PBE+U, not something it computes, so step 6 repeats the calcula
 |---|---|---|---|---|---|---|---|
 | Gap (eV) | 0.03 | 0.04 | 0.15 | 0.71 | 0.93 | 1.10 | 1.33 |
 | Occupied 4f center - VBM (eV) | -0.18 | -0.26 | -0.64 | -0.95 | -1.18 | -1.46 | -2.16 |
+| Occupied 4f top → CBM (eV) | 0.05 | 0.13 | 0.64 | 1.51 | 1.97 | 2.43 | 3.36 |
 
 The gap barely moves until U reaches about 4 eV, then grows steadily, but it stays below experiment over the whole range and reaches only 1.33 eV at U = 10 eV. (At U = 7 eV the gap here is 0.93 eV rather than the 1.01 eV of step 5, because step 5 uses the slightly larger PBE+U lattice constant.)
 
 Comparing these numbers with 1.65 eV needs care. The measured gap is the 4f → 5d edge: in EuS the occupied 4f level sits above the S 3p band and forms the top of the valence band. In PBE+U that ordering only holds at small U. As U grows the occupied 4f sinks below the valence band top, which then becomes S 3p (the step 5 PDOS shows this at U = 7 eV), so the gap in the table becomes an S 3p → Eu 5d gap, a different transition from the one measured. By U = 10 eV the 4f band center is even below the S 3p center.
+
+The last row tracks the measured transition directly, from the top of the occupied 4f band to the conduction band. It passes 1.65 eV near U = 6.3 eV, but at that U the 4f top already sits about 0.9 eV below the valence band top, so the number matches while the band ordering is wrong.
 
 So the failure is not just that the gap is too small. No single U gets the gap and the 4f position right together: a small U keeps the 4f at the top of the valence band but leaves almost no gap, and a large U opens a gap only by burying the 4f below the S 3p band. Getting both needs a method that also corrects the Eu 5d conduction band, such as a hybrid functional or GW.
 

@@ -84,7 +84,7 @@ ax.set_xlabel("U on Eu 4f (eV)")
 ax.set_ylabel("Band gap (eV)")
 ax.set_ylim(bottom=0)
 ax.set_title("Band gap", loc="left")
-ax.legend(loc="center right")
+ax.legend(loc="upper left")
 
 ax = axes[1]
 ax.plot(U_VALUES, f_center, "o-", color=ORANGE, label="occupied Eu 4f")
