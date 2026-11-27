@@ -219,6 +219,12 @@ def test_magnetic_cells_have_the_right_neighbor_shells(cell, afm, expected):
     assert _pair_sums(cell, afm) == pytest.approx(expected)
 
 
+@pytest.mark.parametrize("cell", ["I", "II"])
+def test_magnetic_cells_are_right_handed(cell):
+    atoms, _ = eus.magnetic_structure(cell)
+    assert np.linalg.det(atoms.cell) == pytest.approx(2 * eus.A_EXP ** 3 / 4)
+
+
 def test_exchange_constants_invert_the_energy_model():
     # energies (per 2-Eu cell) built from the model with known J1, J2
     j1, j2, s2 = 0.0381, -0.0172, eus.S_EU ** 2

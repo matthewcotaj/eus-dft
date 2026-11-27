@@ -104,10 +104,11 @@ def run(name, workdir, a=A_EXP, ecut=140, kmesh=6, u=0.0, calculation="scf",
 S_EU = 3.5           # Eu2+ spin (4f7)
 
 # Two-formula-unit cells, as rows of primitive lattice vectors. Each holds one
-# Eu on each of the two alternating planes of its AFM ordering.
+# Eu on each of the two alternating planes of its AFM ordering. Both matrices
+# have determinant +2, so the cells stay right-handed, which pw.x assumes.
 MAGNETIC_CELLS = {
     # tetragonal, a/sqrt2 x a/sqrt2 x a, AFM planes along [001]
-    "I": [[1, -1, 0], [0, 0, 1], [1, 1, -1]],
+    "I": [[0, 0, 1], [1, -1, 0], [1, 1, -1]],
     # rhombohedral, AFM planes along [111]
     "II": [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
 }
